@@ -19,7 +19,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler;
+import io.papermc.paper.threadedregions.scheduler.AsyncScheduler;
 
 import me.jumper251.replay.api.ReplayAPI;
 import me.justindevb.anticheatreplay.api.events.RecordingSaveEvent;
@@ -74,7 +75,7 @@ public abstract class ListenerBase {
 	protected void startRecording(Player p, String replayName) {
 		RecordingStartEvent startEvent = new RecordingStartEvent(p, replayName);
 
-		Bukkit.getScheduler().runTask(acReplay, () -> {
+		Bukkit.getGlobalRegionScheduler().run(acReplay, (task1) -> {
 			Bukkit.getPluginManager().callEvent(startEvent);
 		});
 
@@ -82,7 +83,7 @@ public abstract class ListenerBase {
 			return;
 
 		acReplay.log("Starting recording of player: " + p.getName(), false);
-		Bukkit.getScheduler().runTask(acReplay, () -> {
+		Bukkit.getGlobalRegionScheduler().run(acReplay, (task2) -> {
 
 			replay.recordReplay(replayName, Bukkit.getConsoleSender(), getNearbyPlayers(p));
 		});
@@ -103,11 +104,11 @@ public abstract class ListenerBase {
 		alertList.add(target.getUniqueId());
 		String replayName = getReplayName(target, "report");
 		acReplay.log("Starting recording of player: " + target.getName(), false);
-		Bukkit.getScheduler().runTask(acReplay, () -> {
+		Bukkit.getGlobalRegionScheduler().run(acReplay, (task) -> {
 			replay.recordReplay(replayName, Bukkit.getConsoleSender(), getNearbyPlayers(target));
 		});
 
-		Bukkit.getScheduler().runTaskLaterAsynchronously(acReplay, () -> {
+		Bukkit.getAsyncScheduler().runDelayed(acReplay, (task2) -> {
 			replay.stopReplay(replayName, true);
 			acReplay.log("Saved a player report:", false);
 			acReplay.log(reporter.getName() + " reported " + target.getName() + " for " + reason, false);
@@ -131,9 +132,7 @@ public abstract class ListenerBase {
 	private void runLogic(Player p, String replayName) {
 		PlayerCache cachedPlayer = acReplay.getCachedPlayer(p.getUniqueId());
 		long loginTime = cachedPlayer.getLoginTimeStamp();
-		new BukkitRunnable() {
-			@Override
-			public void run() {
+		Bukkit.getAsyncScheduler().runDelayed(acReplay, (task1) -> {
 				if (ALWAYS_SAVE_RECORDING)
 					punishList.add(p.getUniqueId());
 				if (!p.isOnline() || p == null) {
@@ -177,7 +176,7 @@ public abstract class ListenerBase {
 				}
 
 			}
-		}.runTaskLaterAsynchronously(acReplay, 20L * 60L * delay);
+		}, 20L * 60L * delay);
 	}
 
 
