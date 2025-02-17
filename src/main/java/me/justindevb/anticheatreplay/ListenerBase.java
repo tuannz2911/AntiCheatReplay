@@ -132,51 +132,50 @@ public abstract class ListenerBase {
 	private void runLogic(Player p, String replayName) {
 		PlayerCache cachedPlayer = acReplay.getCachedPlayer(p.getUniqueId());
 		long loginTime = cachedPlayer.getLoginTimeStamp();
-		Bukkit.getAsyncScheduler().runDelayed(acReplay, (task1) -> {
-				if (ALWAYS_SAVE_RECORDING)
-					punishList.add(p.getUniqueId());
-				if (!p.isOnline() || p == null) {
-					if (SAVE_ON_DISCONNECT)
-						punishList.add(p.getUniqueId());
-				}
-				if (punishList.contains(p.getUniqueId())) {
-					RecordingSaveEvent saveEvent = new RecordingSaveEvent(p, replayName);
+		Bukkit.getAsyncScheduler().runDelayed(acReplay, (task1) - > {
+    if (ALWAYS_SAVE_RECORDING)
+        punishList.add(p.getUniqueId());
 
-					Bukkit.getScheduler().runTask(acReplay, () -> {
-						Bukkit.getPluginManager().callEvent(saveEvent);
-					});
+    if (!p.isOnline() || p == null) {
+        if (SAVE_ON_DISCONNECT)
+            punishList.add(p.getUniqueId());
+    }
 
+    if (punishList.contains(p.getUniqueId())) {
+        RecordingSaveEvent saveEvent = new RecordingSaveEvent(p, replayName);
 
-					if (saveEvent.isCancelled())
-						return;
+        Bukkit.getScheduler().runTask(acReplay, () - > {
+            Bukkit.getPluginManager().callEvent(saveEvent);
+        });
 
-					replay.stopReplay(replayName, true);
-					acReplay.log("Saving recording of attempted hack...", false);
-					acReplay.log("Saved as: " + replayName, false);
-					sendDiscordWebhook(replayName, p, getOnlineTime(loginTime, System.currentTimeMillis()));
-					punishList.remove(p.getUniqueId());
+        if (saveEvent.isCancelled())
+            return;
 
-					if (notifyStaff) {
-						String notification = Messages.NOTIFY_RECORDING;
-						notification = notification.replace("%r", replayName);
-						for (Player p : Bukkit.getOnlinePlayers()) {
-							if (p.hasPermission("AntiCheatReplay.recording-notify"))
-								p.sendMessage(ChatColor.GOLD + notification);
-						}
-					}
+        replay.stopReplay(replayName, true);
+        acReplay.log("Saving recording of attempted hack...", false);
+        acReplay.log("Saved as: " + replayName, false);
+        sendDiscordWebhook(replayName, p, getOnlineTime(loginTime, System.currentTimeMillis()));
+        punishList.remove(p.getUniqueId());
 
-					if (alertList.contains(p.getUniqueId()))
-						alertList.remove(p.getUniqueId());
+        if (notifyStaff) {
+            String notification = Messages.NOTIFY_RECORDING;
+            notification = notification.replace("%r", replayName);
+            for (Player p: Bukkit.getOnlinePlayers()) {
+                if (p.hasPermission("AntiCheatReplay.recording-notify"))
+                    p.sendMessage(ChatColor.GOLD + notification);
+            }
+        }
 
-				} else {
-					replay.stopReplay(replayName, false);
-					if (alertList.contains(p.getUniqueId()))
-						alertList.remove(p.getUniqueId());
-					acReplay.log("Not saving recording...", false);
-				}
+        if (alertList.contains(p.getUniqueId()))
+            alertList.remove(p.getUniqueId());
 
-			}
-		}, 20L * 60L * delay);
+    } else {
+        replay.stopReplay(replayName, false);
+        if (alertList.contains(p.getUniqueId()))
+            alertList.remove(p.getUniqueId());
+        acReplay.log("Not saving recording...", false);
+    }
+}, 20 L * 60 L * delay);
 	}
 
 
